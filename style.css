@@ -1,0 +1,550 @@
+:root {
+  --bg: #e8e5fb;
+  --panel: #fff;
+  --panel-a: rgba(255, 255, 255, 0.93);
+  --line: #b9b3ea;
+  --ink: #1d1a3d;
+  --muted: #5d5890;
+  --mint: #0f9d74;
+  --amber: #b87800;
+  --rose: #d2284d;
+  --btn: #4b3fd1;
+  --btnink: #fff;
+  --u: clamp(12px, 2vh, 19px); /* satuan teks mengikuti tinggi layar */
+  box-sizing: border-box;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f0d24;
+    --panel: #1f1b40;
+    --panel-a: rgba(31, 27, 64, 0.93);
+    --line: #4b4690;
+    --ink: #eceaff;
+    --muted: #a9a4de;
+    --mint: #7ef0c8;
+    --amber: #ffd166;
+    --rose: #ff6b8b;
+    --btn: #7ef0c8;
+    --btnink: #10202a;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f0d24;
+  --panel: #1f1b40;
+  --panel-a: rgba(31, 27, 64, 0.93);
+  --line: #4b4690;
+  --ink: #eceaff;
+  --muted: #a9a4de;
+  --mint: #7ef0c8;
+  --amber: #ffd166;
+  --rose: #ff6b8b;
+  --btn: #7ef0c8;
+  --btnink: #10202a;
+}
+[hidden] {
+  display: none !important;
+}
+*,
+*:before,
+*:after {
+  box-sizing: inherit;
+}
+html,
+body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: #05040f;
+  overscroll-behavior: none;
+}
+body {
+  color: var(--ink);
+  font-family: "Pixelify Sans", "Courier New", monospace;
+  font-size: var(--u);
+  line-height: 1.4;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ---- layar penuh: kanvas 480x270 memenuhi jendela, tanpa bingkai ---- */
+#app {
+  position: fixed;
+  inset: 0;
+  --sl: env(safe-area-inset-left, 0px);
+  --sr: env(safe-area-inset-right, 0px);
+  --st: env(safe-area-inset-top, 0px);
+  --sb: env(safe-area-inset-bottom, 0px);
+}
+canvas#c {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+  background: #000;
+}
+
+/* sudut bertakik ala pixel art */
+.card,
+.b,
+.hb,
+.modal {
+  --n: 4px;
+  clip-path: polygon(
+    0 var(--n),
+    var(--n) var(--n),
+    var(--n) 0,
+    calc(100% - var(--n)) 0,
+    calc(100% - var(--n)) var(--n),
+    100% var(--n),
+    100% calc(100% - var(--n)),
+    calc(100% - var(--n)) calc(100% - var(--n)),
+    calc(100% - var(--n)) 100%,
+    var(--n) 100%,
+    var(--n) calc(100% - var(--n)),
+    0 calc(100% - var(--n))
+  );
+}
+
+/* ---- HUD ---- */
+.hud {
+  position: absolute;
+  inset: calc(8px + var(--st)) calc(8px + var(--sr)) auto calc(8px + var(--sl));
+  display: flex;
+  justify-content: space-between;
+  pointer-events: none;
+}
+.hb {
+  width: min(22em, 36vw);
+  background: var(--panel-a);
+  border: 3px solid var(--line);
+  padding: 0.35em 0.6em 0.4em;
+}
+.hb.mid {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(20em, 30vw);
+  text-align: center;
+}
+.hb small {
+  display: block;
+  font-size: 0.8em;
+  color: var(--muted);
+  margin-bottom: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.hb .ttl {
+  font-size: 0.72em;
+}
+.bar {
+  position: relative;
+  height: 0.7em;
+  background: rgba(0, 0, 0, 0.45);
+  margin-bottom: 3px;
+  overflow: hidden;
+  box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.4);
+}
+.bar:after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    90deg,
+    transparent 0 7px,
+    rgba(0, 0, 0, 0.5) 7px 9px
+  );
+}
+.bar i {
+  display: block;
+  height: 100%;
+  width: 100%;
+  transition: width 0.3s;
+  box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.3);
+}
+.hp i {
+  background: var(--rose);
+}
+.fp i {
+  background: var(--amber);
+}
+
+/* ---- menu: Pengaturan, Misi di bawahnya ---- */
+.menu {
+  position: absolute;
+  left: calc(8px + var(--sl));
+  top: calc(8px + var(--st) + 5.6em);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: min(11em, 20vw);
+}
+.menu .b {
+  font-size: 0.85em;
+  padding: 0.5em 0.7em;
+  text-align: left;
+  background: var(--panel-a);
+}
+
+/* ---- dialog & perintah di bawah layar ---- */
+.dock {
+  position: absolute;
+  left: 50%;
+  bottom: calc(8px + var(--sb));
+  transform: translateX(-50%);
+  width: min(54em, calc(100% - 16px - var(--sl) - var(--sr)));
+  max-height: 58vh;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  pointer-events: none;
+}
+.dock > * {
+  pointer-events: auto;
+}
+.card {
+  background: var(--panel-a);
+  border: 4px solid var(--line);
+  padding: 0.6em 0.8em;
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.06);
+}
+#ui:empty {
+  display: none;
+}
+#ui .card {
+  max-height: 44vh;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.pi {
+  border-left: 8px solid var(--mint);
+  font-size: 0.95em;
+}
+.pi b {
+  color: var(--mint);
+  margin-right: 8px;
+}
+.hint {
+  padding: 0.3em 0.7em;
+  border-width: 3px;
+}
+.qm {
+  font-size: 0.8em;
+  color: var(--muted);
+}
+.qt {
+  font-size: 1.6em;
+  margin: 0.15em 0 0.5em;
+  overflow-wrap: anywhere;
+  letter-spacing: 0.5px;
+}
+.tm {
+  height: 8px;
+  background: rgba(0, 0, 0, 0.45);
+  margin: 0.6em 0;
+  box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.4);
+}
+.tm i {
+  display: block;
+  height: 100%;
+  width: 100%;
+  background: var(--mint);
+}
+.row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.ar {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+.ar .in {
+  flex: 1;
+  margin-bottom: 0;
+  min-width: 0;
+}
+.hr {
+  align-items: center;
+}
+.hr .qm {
+  flex: 1;
+}
+.row.end {
+  justify-content: flex-end;
+  margin-top: 0.8em;
+}
+.b {
+  font: inherit;
+  background: var(--btn);
+  color: var(--btnink);
+  border: 0;
+  padding: 0.55em 1em;
+  cursor: pointer;
+  touch-action: manipulation;
+  box-shadow:
+    inset 0 -4px 0 rgba(0, 0, 0, 0.3),
+    inset 0 3px 0 rgba(255, 255, 255, 0.35);
+  transition: filter 0.1s;
+}
+.b:hover:not(:disabled) {
+  filter: brightness(1.12);
+}
+.b:active {
+  transform: translateY(2px);
+}
+.b:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.b.g {
+  background: transparent;
+  color: var(--ink);
+  box-shadow: inset 0 0 0 2px var(--line);
+}
+.menu .b.g {
+  background: var(--panel-a);
+}
+.opts {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+.opts .b {
+  font-size: 1.25em;
+  text-align: left;
+}
+.in {
+  font: inherit;
+  font-size: 1.5em;
+  width: 100%;
+  padding: 0.3em 0.6em;
+  border: 4px solid var(--line);
+  background: rgba(0, 0, 0, 0.35);
+  color: var(--ink);
+  margin-bottom: 8px;
+  border-radius: 0;
+}
+:is(.b, .in, input):focus-visible {
+  outline: 3px solid var(--amber);
+  outline-offset: 2px;
+}
+.ok {
+  color: var(--mint);
+}
+.no {
+  color: var(--rose);
+}
+.irow {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 2px solid var(--line);
+}
+.irow > div {
+  flex: 1;
+}
+.irow .ic {
+  font-size: 1.4em;
+  width: 28px;
+  text-align: center;
+}
+.irow small {
+  color: var(--muted);
+}
+.ihd {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.pv {
+  width: 84px;
+  height: 84px;
+  background: var(--bg);
+  border: 3px solid var(--line);
+  image-rendering: pixelated;
+}
+
+/* ---- overlay Pengaturan & Misi ---- */
+#ov {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  background: rgba(8, 6, 26, 0.62);
+}
+.modal {
+  width: min(34em, 100%);
+  max-height: 100%;
+  overflow: auto;
+  background: var(--panel);
+  border: 4px solid var(--line);
+  padding: 0.9em 1.1em 1em;
+}
+.modal h2 {
+  margin: 0 0 0.5em;
+  font-size: 1.4em;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-shadow: 3px 3px 0 var(--line);
+}
+fieldset {
+  border: 3px solid var(--line);
+  margin: 0 0 0.7em;
+  padding: 0.4em 0.8em 0.6em;
+}
+legend {
+  padding: 0 0.4em;
+  color: var(--muted);
+  font-size: 0.85em;
+}
+.sw {
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+  padding: 0.35em 0;
+  cursor: pointer;
+}
+.sw input {
+  width: 1.2em;
+  height: 1.2em;
+  accent-color: var(--btn);
+  margin: 0;
+}
+.mt {
+  font-size: 0.8em;
+  text-align: right;
+  max-width: 11em;
+}
+.mt.wip {
+  color: var(--amber);
+}
+
+/* ---- kontrol sentuh ---- */
+#pad {
+  position: absolute;
+  inset: auto calc(14px + var(--sr)) calc(14px + var(--sb))
+    calc(14px + var(--sl));
+  display: none;
+  justify-content: space-between;
+  align-items: flex-end;
+  pointer-events: none;
+  z-index: 5;
+}
+body[data-ctl="touch"] #pad:not(.off) {
+  display: flex;
+}
+#pad .dp,
+#pad .ab {
+  pointer-events: auto;
+}
+.dp {
+  display: grid;
+  grid-template-columns: repeat(3, 4.2em);
+  grid-auto-rows: 4.2em;
+  gap: 6px;
+  touch-action: none;
+  user-select: none;
+}
+.dp .b,
+.ab .b {
+  padding: 0;
+  font-size: 1.4em;
+  text-align: center;
+  opacity: 0.88;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.ab {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  touch-action: none;
+}
+.ab .b {
+  width: 4.6em;
+  height: 4.6em;
+}
+.ab #pb {
+  width: 3.4em;
+  height: 3.4em;
+  font-size: 1em;
+  background: var(--panel-a);
+  color: var(--ink);
+}
+
+/* panel dialog menyempit agar tidak menabrak tombol sentuh */
+body[data-ctl="touch"].pad-on .dock {
+  width: min(54em, calc(100% - 2 * (14em + 14px) - var(--sl) - var(--sr)));
+}
+
+/* ---- peringatan potret ---- */
+#rot {
+  display: none;
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 24px;
+  background: #05040f;
+  color: var(--ink);
+  font-size: 1.3em;
+}
+@media (orientation: portrait) and (max-width: 700px) {
+  #rot {
+    display: flex;
+  }
+}
+
+/* ---- layar sempit / pendek ---- */
+@media (max-width: 900px), (max-height: 520px) {
+  .hb {
+    width: 30vw;
+  }
+  .hb.mid {
+    width: 28vw;
+  }
+  .opts {
+    grid-template-columns: 1fr 1fr;
+  }
+  .qt {
+    font-size: 1.35em;
+  }
+  .menu {
+    top: calc(8px + var(--st) + 5.2em);
+  }
+}
+@media (max-height: 520px) {
+  :root {
+    --u: 12px;
+  }
+  .hb .ttl {
+    display: none;
+  }
+  .dock {
+    max-height: 70vh;
+  }
+  #ui .card {
+    max-height: 56vh;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bar i {
+    transition: none;
+  }
+}
+
+/* saat soal tampil, baris Pi disembunyikan agar arena battle tetap terlihat */
+.dock:has(.qt) .pi {
+  display: none;
+}
